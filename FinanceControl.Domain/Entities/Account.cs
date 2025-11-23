@@ -5,47 +5,49 @@ using FinanceControl.Domain.ValueObjects;
 
 namespace FinanceControl.Domain.Entities;
 
-public class Account
+public class Account : EntityBase
 {
-   private readonly List<Transaction> _transactions = new();
+    private readonly List<Transaction> _transactions = new();
     private readonly List<DomainEvent> _domainEvents = new();
-
-    public Guid Id { get; private set; }
+    
     public string Name { get; private set; }
     public AccountType Type { get; private set; }
     public Money Balance { get; private set; }
     public string Currency { get; private set; }
-    public bool IsActive { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime? UpdatedAt { get; private set; }
+    public Guid UserId { get; private set; }
     
     // Navigation properties
     public IReadOnlyCollection<Transaction> Transactions => _transactions.AsReadOnly();
     public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();
-
+    public User User { get; private set; } = null!;
+    
     // EF Core Constructor
-    private Account() { }
+    private Account() 
+    {
+        Name = string.Empty;
+        Currency = string.Empty;
+        Balance = null!;
+    }
 
-    public Account(string name, AccountType type, string currency, decimal initialBalance = 0)
+    public Account(string name, AccountType type, string currency, Guid userId, decimal initialBalance = 0) 
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new DomainException("Account name cannot be empty");
 
         if (name.Length > 100)
             throw new DomainException("Account name cannot exceed 100 characters");
-
-        Id = Guid.NewGuid();
+        
         Name = name;
         Type = type;
         Currency = currency.ToUpperInvariant();
         Balance = new Money(initialBalance, Currency);
-        IsActive = true;
-        CreatedAt = DateTime.UtcNow;
-
+        UserId = userId;
+        
+        SetCreatedBy(UserId);
         AddDomainEvent(new AccountCreatedEvent(Id, Name, Type));
     }
 
-    public void Deposit(decimal amount, string description, Category category)
+    public void Deposit(decimal amount, string description, Category category, Guid userId)
     {
         if (!IsActive)
             throw new DomainException("Cannot deposit to inactive account");
@@ -58,17 +60,18 @@ public class Account
             TransactionType.Income,
             new Money(amount, Currency),
             description,
-            category
+            category,
+            userId
         );
 
         _transactions.Add(transaction);
         Balance = Balance.Add(amount);
-        UpdatedAt = DateTime.UtcNow;
+        SetUpdatedAt(userId);
 
         AddDomainEvent(new TransactionCreatedEvent(transaction.Id, Id, TransactionType.Income, amount));
     }
 
-    public void Withdraw(decimal amount, string description, Category category)
+    public void Withdraw(decimal amount, string description, Category category, Guid userId)
     {
         if (!IsActive)
             throw new DomainException("Cannot withdraw from inactive account");
@@ -84,17 +87,18 @@ public class Account
             TransactionType.Expense,
             new Money(amount, Currency),
             description,
-            category
+            category,
+            userId
         );
 
         _transactions.Add(transaction);
         Balance = Balance.Subtract(amount);
-        UpdatedAt = DateTime.UtcNow;
+        SetUpdatedAt(userId);
 
         AddDomainEvent(new TransactionCreatedEvent(transaction.Id, Id, TransactionType.Expense, amount));
     }
 
-    public void Transfer(Account destinationAccount, decimal amount, string description)
+    public void Transfer(Account destinationAccount, decimal amount, string description, Guid userId)
     {
         if (!IsActive)
             throw new DomainException("Cannot transfer from inactive account");
@@ -117,7 +121,8 @@ public class Account
             TransactionType.Transfer,
             new Money(amount, Currency),
             $"Transfer to {destinationAccount.Name}: {description}",
-            null
+            null,
+            destinationAccount.UserId
         );
 
         // Creditar na conta destino
@@ -126,7 +131,8 @@ public class Account
             TransactionType.Transfer,
             new Money(amount, Currency),
             $"Transfer from {Name}: {description}",
-            null
+            null,
+            destinationAccount.UserId
         );
 
         _transactions.Add(withdrawTransaction);
@@ -135,13 +141,13 @@ public class Account
         Balance = Balance.Subtract(amount);
         destinationAccount.Balance = destinationAccount.Balance.Add(amount);
 
-        UpdatedAt = DateTime.UtcNow;
+        SetUpdatedAt(userId);
         destinationAccount.UpdatedAt = DateTime.UtcNow;
 
         AddDomainEvent(new TransferCompletedEvent(Id, destinationAccount.Id, amount));
     }
 
-    public void UpdateName(string newName)
+    public void UpdateName(string newName, Guid? userId = null)
     {
         if (string.IsNullOrWhiteSpace(newName))
             throw new DomainException("Account name cannot be empty");
@@ -150,25 +156,48 @@ public class Account
             throw new DomainException("Account name cannot exceed 100 characters");
 
         Name = newName;
-        UpdatedAt = DateTime.UtcNow;
+        SetUpdatedAt(userId);
     }
 
-    public void Activate()
+    public override void Delete(Guid userId)
     {
+        if (IsDeleted)
+            throw new DomainException("Account is already deleted");
+        
+        if (!IsActive)
+            throw new DomainException("Cannot delete an inactive account. Activate it first.");
+        
+        base.Delete(userId);    
+    }
+    
+    public override void Restore(Guid userId)
+    {
+        if (!IsDeleted)
+            throw new DomainException("Account is not deleted");
+
+        base.Restore(userId);
+    }
+
+    public override void Activate(Guid userId)
+    {
+        if (IsDeleted)
+            throw new DomainException("Cannot activate a deleted account. Restore it first.");
+
         if (IsActive)
             throw new DomainException("Account is already active");
-
-        IsActive = true;
-        UpdatedAt = DateTime.UtcNow;
+        
+        base.Activate(userId);
     }
 
-    public void Deactivate()
+    public override void Deactivate(Guid userId)
     {
+        if (IsDeleted)
+            throw new DomainException("Cannot deactivate a deleted account");
+        
         if (!IsActive)
             throw new DomainException("Account is already inactive");
 
-        IsActive = false;
-        UpdatedAt = DateTime.UtcNow;
+        base.Deactivate(userId);
     }
 
     public decimal GetBalanceAtDate(DateTime date)

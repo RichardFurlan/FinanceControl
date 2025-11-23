@@ -5,15 +5,11 @@ namespace FinanceControl.Domain.Entities;
 /// <summary>
 /// Entity: Categoria de transação
 /// </summary>
-public class Category
+public class Category : EntityBase
 {
-    public Guid Id { get; private set; }
     public string Name { get; private set; }
     public string Icon { get; private set; }
     public string Color { get; private set; }
-    public bool IsActive { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime? UpdatedAt { get; private set; }
 
     // EF Core Constructor
     private Category() 
@@ -23,23 +19,21 @@ public class Category
         Color = string.Empty;
     }
 
-    public Category(string name, string icon = "📁", string color = "#6B7280")
+    public Category(string name, Guid userId, string icon = "📁", string color = "#6B7280") 
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new DomainException("Category name cannot be empty");
 
         if (name.Length > 50)
             throw new DomainException("Category name cannot exceed 50 characters");
-
-        Id = Guid.NewGuid();
         Name = name;
         Icon = icon;
         Color = color;
-        IsActive = true;
-        CreatedAt = DateTime.UtcNow;
+        
+        SetCreatedBy(userId);
     }
 
-    public void UpdateName(string newName)
+    public void UpdateName(string newName, Guid? userId = null)
     {
         if (string.IsNullOrWhiteSpace(newName))
             throw new DomainException("Category name cannot be empty");
@@ -48,36 +42,59 @@ public class Category
             throw new DomainException("Category name cannot exceed 50 characters");
 
         Name = newName;
-        UpdatedAt = DateTime.UtcNow;
+        SetUpdatedAt(userId);
     }
 
-    public void UpdateIcon(string newIcon)
+    public void UpdateIcon(string newIcon, Guid? userId = null)
     {
         Icon = newIcon;
-        UpdatedAt = DateTime.UtcNow;
+        SetUpdatedAt(userId);
     }
 
-    public void UpdateColor(string newColor)
+    public void UpdateColor(string newColor, Guid? userId = null)
     {
         Color = newColor;
-        UpdatedAt = DateTime.UtcNow;
+        SetUpdatedAt(userId);
     }
 
-    public void Deactivate()
+    public override void Deactivate(Guid userId)
     {
+        if (IsDeleted)
+            throw new DomainException("Cannot deactivate a deleted category");
+        
         if (!IsActive)
             throw new DomainException("Category is already inactive");
 
-        IsActive = false;
-        UpdatedAt = DateTime.UtcNow;
+        base.Deactivate(userId);
     }
 
-    public void Activate()
+    public override void Activate(Guid userId)
     {
+        if (IsDeleted)
+            throw new DomainException("Cannot activate a deleted category. Restore it first.");
+
         if (IsActive)
             throw new DomainException("Category is already active");
 
-        IsActive = true;
-        UpdatedAt = DateTime.UtcNow;
+        base.Activate(userId);
+    }
+    
+    public override void Delete(Guid userId)
+    {
+        if (IsDeleted)
+            throw new DomainException("Category is already deleted");
+        
+        if (!IsActive)
+            throw new DomainException("Cannot delete an inactive category. Activate it first.");
+        
+        base.Delete(userId);    
+    }
+    
+    public override void Restore(Guid userId)
+    {
+        if (!IsDeleted)
+            throw new DomainException("Category is not deleted");
+
+        base.Restore(userId);
     }
 }
