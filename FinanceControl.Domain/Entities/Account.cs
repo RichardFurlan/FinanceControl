@@ -47,7 +47,7 @@ public class Account : EntityBase
         AddDomainEvent(new AccountCreatedEvent(Id, Name, Type));
     }
 
-    public void Deposit(decimal amount, string description, Category category, Guid userId)
+    public void Deposit(decimal amount, string description, Category? category, Guid userId)
     {
         if (!IsActive)
             throw new DomainException("Cannot deposit to inactive account");
@@ -71,7 +71,7 @@ public class Account : EntityBase
         AddDomainEvent(new TransactionCreatedEvent(transaction.Id, Id, TransactionType.Income, amount));
     }
 
-    public void Withdraw(decimal amount, string description, Category category, Guid userId)
+    public void Withdraw(decimal amount, string description, Category? category, Guid userId)
     {
         if (!IsActive)
             throw new DomainException("Cannot withdraw from inactive account");

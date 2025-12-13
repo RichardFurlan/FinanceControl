@@ -2,7 +2,7 @@
 
 namespace FinanceControl.Domain.Interfaces;
 
-public interface ICategoryRepository
+public interface ICategoryRepository : IGenericRepository<Category>
 {
     Task<IEnumerable<Category>> GetActiveAsync(CancellationToken cancellationToken = default);
     Task<Category?> GetByNameAsync(string name, CancellationToken cancellationToken = default);
