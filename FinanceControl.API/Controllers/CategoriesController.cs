@@ -1,11 +1,14 @@
 ﻿using FinanceControl.Application.UseCases.Categories.CreateCategory;
 using FinanceControl.Application.UseCases.Categories.GetCategories;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinanceControl.API.Controllers;
+
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CategoriesController : ControllerBase
 {
     private readonly IMediator _mediator;

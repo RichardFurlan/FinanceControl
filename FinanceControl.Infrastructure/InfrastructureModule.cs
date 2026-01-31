@@ -51,9 +51,10 @@ public static  class InfrastructureModule
     
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
-        // HttpContextAccessor necessário para CurrentUserService
         services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<ITokenService, TokenService>();
 
         return services;
     }

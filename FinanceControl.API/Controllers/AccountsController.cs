@@ -1,12 +1,14 @@
 ﻿using FinanceControl.Application.UseCases.Accounts.CreateAccount;
 using FinanceControl.Application.UseCases.Accounts.GetAccounts;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinanceControl.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class AccountsController : ControllerBase
 {
     private readonly IMediator _mediator;
