@@ -53,6 +53,7 @@ public static  class InfrastructureModule
     {
         services.AddHttpContextAccessor();
         
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, TokenService>();
 
