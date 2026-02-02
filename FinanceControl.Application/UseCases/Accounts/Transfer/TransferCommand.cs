@@ -8,4 +8,4 @@ public record TransferCommand(
     Guid DestinationAccountId,
     decimal Amount,
     string Description
-) : IRequest<ResultViewModel>;
+) : IRequest<ResultViewModel<AccountDto>>;
