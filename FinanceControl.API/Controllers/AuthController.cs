@@ -1,4 +1,5 @@
-﻿using FinanceControl.Application.UseCases.Users.Login;
+﻿using FinanceControl.Application.UseCases.Users.ChangePassword;
+using FinanceControl.Application.UseCases.Users.Login;
 using FinanceControl.Application.UseCases.Users.Register;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +32,16 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return Ok(result);
+    }
+    
+    /// <summary>
+    /// Change Password
+    /// </summary>
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordCommand command)
     {
         var result = await _mediator.Send(command);
         return Ok(result);

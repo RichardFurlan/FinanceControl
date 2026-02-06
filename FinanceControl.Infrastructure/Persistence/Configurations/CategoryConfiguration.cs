@@ -15,6 +15,10 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(c => c.Name)
             .IsRequired()
             .HasMaxLength(50);
+        
+        builder.Property(c => c.Description)
+            .IsRequired()
+            .HasMaxLength(500);
 
         builder.Property(c => c.Icon)
             .HasMaxLength(10);
@@ -25,7 +29,10 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(c => c.IsActive)
             .IsRequired()
             .HasDefaultValue(true);
-        
+
+        builder.HasOne(c => c.User)
+            .WithOne(u => u.Categories)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Índices
         builder.HasIndex(c => c.Name);

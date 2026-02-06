@@ -12,6 +12,7 @@ public class User : EntityBase
     // Navigation properties
     private readonly List<Account> _accounts = new();
     public IReadOnlyCollection<Account> Accounts => _accounts.AsReadOnly();
+    public Category? Categories { get; private set; }
     
     // EF Core
     private User()

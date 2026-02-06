@@ -29,7 +29,7 @@ public class CreateCategoryHandler : IRequestHandler<CreateCategoryCommand, Resu
         if (await _categoryRepository.ExistsByNameAsync(request.Name, cancellationToken))
             _notifications.AddNotification(nameof(request.Name), $"Name {request.Name} already exists");
 
-        var category = new Category(request.Name,userId.Value, request.Icon, request.Color);
+        var category = new Category(request.Name,request.Description, userId.Value, request.Icon, request.Color);
 
         if(_notifications.HasNotifications)
             return ResultViewModel<CategoryDto>.ValidationError(_notifications.GetValidationErrors());
