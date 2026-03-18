@@ -7,12 +7,12 @@ public class User : EntityBase
     public string Name { get; private set; }
     public string Email { get; private set; }
     public string PasswordHash { get; private set; }
-    public bool IsActive { get; private set; }
     public DateTime? LastLoginAt { get; private set; }
     
     // Navigation properties
     private readonly List<Account> _accounts = new();
     public IReadOnlyCollection<Account> Accounts => _accounts.AsReadOnly();
+    public Category? Categories { get; private set; }
     
     // EF Core
     private User()
@@ -36,7 +36,6 @@ public class User : EntityBase
         Name = name;
         Email = email.ToLowerInvariant();
         PasswordHash = passwordHash;
-        IsActive = true;
         SetCreatedBy(Id);
     } 
 

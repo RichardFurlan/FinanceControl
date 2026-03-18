@@ -1,4 +1,5 @@
-﻿using FinanceControl.Application.UseCases.Accounts.CreateAccount;
+﻿using FinanceControl.Application.Common;
+using FinanceControl.Application.UseCases.Accounts.CreateAccount;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,7 +12,8 @@ public static class ApplicationModule
     {
         services
             .AddHandlers()
-            .AddValidation();
+            .AddValidation()
+            .AddNotifications();
         return services;
     }
     
@@ -27,6 +29,12 @@ public static class ApplicationModule
     {
         services.AddValidatorsFromAssemblyContaining<CreateAccountValidator>(ServiceLifetime.Singleton);
 
+        return services;
+    }
+    
+    private static IServiceCollection AddNotifications(this IServiceCollection services)
+    {
+        services.AddScoped<NotificationContext>();
         return services;
     }
 }

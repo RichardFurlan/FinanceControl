@@ -1,4 +1,5 @@
-﻿using FinanceControl.Application.DTOs;
+﻿using FinanceControl.Application.Common;
+using FinanceControl.Application.DTOs;
 using FinanceControl.Application.Interfaces;
 using FinanceControl.Domain.Entities;
 using FinanceControl.Domain.Enums;
@@ -11,11 +12,13 @@ public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, Result
 {
     private readonly IAccountRepository _accountRepository;
     private readonly ICurrentUserService _currentUser;
+    private readonly NotificationContext _notifications;
     
-    public CreateAccountHandler(IAccountRepository accountRepository, ICurrentUserService currentUser)
+    public CreateAccountHandler(IAccountRepository accountRepository, ICurrentUserService currentUser, NotificationContext notifications)
     {
         _accountRepository = accountRepository;
         _currentUser = currentUser;
+        _notifications = notifications;
     }
 
 
@@ -29,7 +32,7 @@ public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, Result
         
         if (!Enum.TryParse<AccountType>(request.Type, out var accountType))
         {
-            throw new ArgumentException($"Invalid account type: {request.Type}");
+            _notifications.AddNotification(nameof(request.Type), $"Type {request.Type} not recognised");
         }
         
         // Criar entidade de domínio
@@ -41,6 +44,9 @@ public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, Result
             userId.Value,
             initialBalance: request.InitialBalance
         );
+        
+        if (_notifications.HasNotifications)
+            return ResultViewModel<AccountDto>.ValidationError(_notifications.GetValidationErrors());
         
         await _accountRepository.AddAsync(account, cancellationToken);
         

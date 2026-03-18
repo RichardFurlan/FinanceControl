@@ -1,9 +1,13 @@
 ﻿namespace FinanceControl.Application.DTOs;
 
+/// <summary>
+/// Resultado de uma operação sem dados (apenas sucesso/erro)
+/// </summary>
 public record ResultViewModel(
     bool IsSuccess = true, 
     string Message = "", 
-    int StatusCode = 200)
+    int StatusCode = 200,
+    IEnumerable<ValidationError>? Errors = null)
 {
     public static ResultViewModel Success(string message = "Operation completed successfully")
         => new(true, message, 200);
@@ -19,11 +23,21 @@ public record ResultViewModel(
 
     public static ResultViewModel Forbidden(string message = "Forbidden")
         => new(false, message, 403);
+    
+    public static ResultViewModel ValidationError(IEnumerable<ValidationError> errors)
+        => new(false, "Validation failed", 422, errors);
 }
-
+/// <summary>
+/// Resultado de uma operação com dados (genérico)
+/// </summary>
 public record ResultViewModel<T> : ResultViewModel
 {
-    public ResultViewModel(T? data, bool isSuccess = true, string message = "", int statusCode = 200) 
+    public ResultViewModel(
+        T? data, 
+        bool isSuccess = true, 
+        string message = "", 
+        int statusCode = 200,
+        IEnumerable<ValidationError>? Errors = null) 
         : base(isSuccess, message, statusCode)
     {
         Data = data;
@@ -49,6 +63,11 @@ public record ResultViewModel<T> : ResultViewModel
     public static ResultViewModel<T> Forbidden(string message = "Forbidden")
         => new(default, false, message, 403);
 
-    public static ResultViewModel<T> ValidationError(string message)
-        => new(default, false, message, 422);
+    public static ResultViewModel<T> ValidationError(IEnumerable<ValidationError> errors)
+        => new(default, false, "Validation failed", 422, errors);
 }
+
+/// <summary>
+/// Representa um erro de validação
+/// </summary>
+public record ValidationError(string Property, string Message);
